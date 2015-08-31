@@ -244,7 +244,7 @@ section .text
 		mov 	rdi, LISTA_SIZE
 		call 	malloc
 
-		mov 	[rax + OFFSET_LISTA], NULL
+		mov 	[rax + OFFSET_PRIMERO], NULL
 
 		pop 	rbp
 		ret
@@ -253,6 +253,41 @@ section .text
 	; void oracionBorrar( lista *l ); [20]
 	oracionBorrar:
 		; COMPLETAR AQUI EL CODIGO
+		;Chequear tamaño de registros y si se preservan
+
+		push 	rbp
+		mov 	rbp, rsp
+		push 	r11
+		push 	r10
+
+		mov 	r12, rdi			;Guarda el puntero a l
+		cmp 	[r12 + OFFSET_PRIMERO], NULL
+		je 		
+		mov 	r13, [r12, OFFSET_PRIMERO]
+
+	.ciclo
+
+		cmp 	[r13 + OFFSET_SIGUIENTE], NULL
+		je 		fin2 	
+		mov 	r14, r13
+		mov 	[r13 + OFFSET_SIGUIENTE], r13
+		mov 	rdi, r14
+		call 	nodoBorrar
+		jmp 	.ciclo
+
+	.fin2 
+		mod 	rdi, r13
+		call 	nodoBorrar
+
+	.fin	
+		mov 	rdi, r10
+		call 	free
+
+		pop 	r10
+		pop 	r11
+		pop 	rbp
+		ret
+
 
 
 
