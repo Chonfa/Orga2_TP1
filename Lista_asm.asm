@@ -133,9 +133,7 @@ section .text
 		; COMPLETAR AQUI EL CODIGO
 
 		push 	rbp
-
 		mov 	rbp, rsp
-
 		push 	rbx
 		sub 	rsp, 8
 
@@ -163,7 +161,7 @@ section .text
 		mov 	rbp, rsp
 		push 	r8
 		push 	rcx
-
+		
 		xor 	r12, r12
 
 		mov 	r12, rdi
@@ -178,8 +176,7 @@ section .text
 		mov 	cl, r15b						;Guardo la longitud en cl(para el loop)
 		mov 	r8, rax							;Preservo el puntero que voy a devolver
 
-	.ciclo
-
+	.ciclo:
 		mov 	r13b, [r12]						;Guardo la letra
 		mov 	[r8], r13b						;Copio la letra a destino
 		inc 	r8								;Incremento ambos punteros
@@ -187,7 +184,6 @@ section .text
 ;		inc 	r14b
 ;		lea 	r12, [r12 + OFFSET_CHAR]
 		loop
-
 
 		pop 	rcx
 		pop 	r8
@@ -208,6 +204,8 @@ section .text
 
 		push 	rbp
 		mov 	rbp, rsp
+		push 	r12
+		sub 	rsp, 8
 
 		mov 	r12, rdi
 		mov 	rdi, NODO_SIZE
@@ -217,6 +215,8 @@ section .text
 		mov 	[rax + OFFSET_SIGUIENTE], NULL
 		mov 	[rax + OFFSET_PALABRA], r12
 
+		add 	rsp, 8
+		pop 	r12
 		pop 	rbp
 		ret
 
@@ -267,6 +267,36 @@ section .text
 	; float longitudMedia( lista *l ); [30]
 	longitudMedia:
 		; COMPLETAR AQUI EL CODIGO
+		push 	rbp
+		mov 	rbp, rsp
+		push 	rbx
+		sub 	rsp, 8
+		
+		mov 	rdi, rbx
+		
+		xor 	xmm0, xmm0	;en xmm0 vamos a guardar la longitudMedia, tengo q ver q el call no la cambie
+		
+		cmp 	[rbx + OFFSET_PRIMERO], NULL
+		je	fin
+		
+		lea 	rbx, [rbx + OFFSET_PRIMERO]
+	.ciclo:
+		mov 	rdi, [rbx + OFFSET_PALABRA]
+		call 	palabraLongitud
+		
+		add 	xmm0, rax
+		
+		cmp 	[rbx + OFFSET_SIGUIENTE], 0
+		je	fin
+		
+		lea 	rbx, [rbx + OFFSET_SIGUIENTE]
+		jmp 	ciclo
+		
+	.fin:
+		add 	rsp, 8
+		pop 	rbx
+		pop 	rbp
+		ret
 
 	; void insertarOrdenado( lista *l, char *palabra, bool (*funcCompararPalabra)(char*,char*) ); [35]
 	insertarOrdenado:
