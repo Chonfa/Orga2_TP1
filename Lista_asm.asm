@@ -275,16 +275,20 @@ section .text
 		mov 	rdi, rbx
 		
 		xor 	xmm0, xmm0	;en xmm0 vamos a guardar la longitudMedia, tengo q ver q el call no la cambie
+		xor 	xmm3, xmm3
 		
 		cmp 	[rbx + OFFSET_PRIMERO], NULL
 		je	fin
 		
 		lea 	rbx, [rbx + OFFSET_PRIMERO]
+
 	.ciclo:
+		inc 	xmm2				;Contador de cantidad de palabras
 		mov 	rdi, [rbx + OFFSET_PALABRA]
 		call 	palabraLongitud
 		
-		add 	xmm0, rax
+		cvtsi2ss xmm1, rax
+		add 	xmm0, xmm1
 		
 		cmp 	[rbx + OFFSET_SIGUIENTE], 0
 		je	fin
@@ -292,7 +296,9 @@ section .text
 		lea 	rbx, [rbx + OFFSET_SIGUIENTE]
 		jmp 	ciclo
 		
-	.fin:
+	.fin:	
+		
+		divpd 	xmm0, xmm2
 		add 	rsp, 8
 		pop 	rbx
 		pop 	rbp
