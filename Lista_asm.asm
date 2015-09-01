@@ -262,22 +262,22 @@ section .text
 		push 	r10
 
 		mov 	r12, rdi			;Guarda el puntero a l
-		cmp 	[r12 + OFFSET_PRIMERO], NULL
-		je 		
+		cmp 	qword [r12 + OFFSET_PRIMERO], NULL
+		je 	fin	
 		mov 	r13, [r12 + OFFSET_PRIMERO]
 
 	.ciclo
 
-		cmp 	[r13 + OFFSET_SIGUIENTE], NULL
+		cmp 	qword [r13 + OFFSET_SIGUIENTE], NULL
 		je 	fin2 	
-		mov 	r14, r13
+		mov 	r14, r13				;podria ser mov rdi, r13
 		mov 	[r13 + OFFSET_SIGUIENTE], r13
-		mov 	rdi, r14
+		mov 	rdi, r14				;no seria necesario
 		call 	nodoBorrar
 		jmp 	.ciclo
 
 	.fin2 
-		mod 	rdi, r13
+		mov 	rdi, r13
 		call 	nodoBorrar
 
 	.fin	
