@@ -30,9 +30,9 @@ EXTERN 		palabraLongitud
 	extern insertarAtras
 
 ; /** DEFINES **/    >> SE RECOMIENDA COMPLETAR LOS DEFINES CON LOS VALORES CORRECTOS
-	%define NULL 		0
-	%define TRUE 		1
-	%define FALSE 		0
+	%define NULL 			0
+	%define TRUE 			1
+	%define FALSE 			0
 
 	%define LISTA_SIZE 	    	 8
 	%define OFFSET_PRIMERO 		 0
@@ -41,7 +41,7 @@ EXTERN 		palabraLongitud
 	%define OFFSET_SIGUIENTE   	 0
 	%define OFFSET_PALABRA 		 8
 
-	%define OFFSET_CHAR			1
+	%define OFFSET_CHAR		1
 
 
 section .rodata
@@ -143,7 +143,7 @@ section .text
 		mov 	rsi, string
 		mov 	rbx, r8
 
-		call fprintf
+		call 	fprintf
 
 		add 	rsp, 8
 		pop 	rbx
@@ -230,7 +230,7 @@ section .text
 
 		call 	free
 
-		pop rbp
+		pop 	rbp
 		ret
 
 
@@ -269,7 +269,7 @@ section .text
 	.ciclo
 
 		cmp 	[r13 + OFFSET_SIGUIENTE], NULL
-		je 		fin2 	
+		je 	fin2 	
 		mov 	r14, r13
 		mov 	[r13 + OFFSET_SIGUIENTE], r13
 		mov 	rdi, r14
@@ -307,8 +307,10 @@ section .text
 		
 		mov 	rdi, rbx
 		
-		xor 	xmm0, xmm0	;en xmm0 vamos a guardar la longitudMedia, tengo q ver q el call no la cambie
-		xor 	xmm3, xmm3
+		xor 	r12, r12	;en r12 vamos a guardar la longitudMedia, tengo q ver q el call no la cambie
+		xor 	xmm0, xmm0
+		xor 	xmm1, xmm1
+		xor 	xmm2, xmm2
 		
 		cmp 	[rbx + OFFSET_PRIMERO], NULL
 		je	fin
@@ -316,7 +318,7 @@ section .text
 		lea 	rbx, [rbx + OFFSET_PRIMERO]
 
 	.ciclo:
-		inc 	xmm2				;Contador de cantidad de palabras
+		inc 	r12				;Contador de cantidad de palabras
 		mov 	rdi, [rbx + OFFSET_PALABRA]
 		call 	palabraLongitud
 		
@@ -330,7 +332,7 @@ section .text
 		jmp 	ciclo
 		
 	.fin:	
-		
+		cvtsi2ss xmm2, r12
 		divpd 	xmm0, xmm2
 		add 	rsp, 8
 		pop 	rbx
@@ -340,10 +342,81 @@ section .text
 	; void insertarOrdenado( lista *l, char *palabra, bool (*funcCompararPalabra)(char*,char*) ); [35]
 	insertarOrdenado:
 		; COMPLETAR AQUI EL CODIGO
-
+		
+		push 	rbp
+		mov 	rbp, rsp
+		
+		cmp 	[rdi + OFFSET_LISTA], NULL
+		je	insertarNull
+		lea 	rbx, [rdi + OFFSET_LISTA]
+		
+	.ciclo
+		;Uso la funcion para comparar
+		
+		cmp 	rax, TRUE
+		je 	insertar
+		
+		cmp	[rdi + OFFSET_SIGUIETE], NULL
+		je 	insertarNull
+		lea 	rbx, [rbx + OFFSET_SIGUIENTE]		;itero la lista
+		jmp 	ciclo
+		
+		
+	.insertar
+		mov 	rdi, rsi		;deberia ir arriba de todo o chequear siguiente = null ?
+		call 	nodoCrear		;deberia ir arriba de todo o chequear sig = null ?
+		
+		
+		cmp	[rbx + OFFSET_SIGUINTE], NULL ; fijarme si el siguiente del que inserto es NULL
+		je 	fin1
+		mov 	r12, [rbx + OFFSET_SIGUIENTE]
+		mov 	[rax + OFFSET_SIGUIENTE], r12
+		jmp 	fin2
+		
+	.fin1
+		mov 	[rax + OFFSET_SIGUIENTE], NULL
+		
+	.fin2
+		mov 	[rbx + OFFSET_SIGUIENTE], rax
+		
+		pop	rbp
+		ret
+	
+	
 	; void filtrarAltaLista( lista *l, bool (*funcCompararPalabra)(char*,char*), char *palabraCmp ); [35]
 	filtrarPalabra:
 		; COMPLETAR AQUI EL CODIGO
+		
+		push 	rbp
+		mov 	rbp, rsp
+		
+		cmp 	[rdi + OFFSET_LISTA], NULL
+		je	fin
+		lea 	rbx, [rdi + OFFSET_LISTA]
+		
+	.ciclo
+		
+		;Uso la funcion para comparar
+		
+		cmp 	rax, TRUE		;Si da True tengo q eliminar
+		jne 	iterar
+	.eliminar
+		
+		
+		call 	nodoBorrar		;primero chequear si era null y guardar siguiente.
+		
+		
+	.iterar
+		cmp 	[rbx + OFFSET_SIGUIENTE], NULL
+		jmp	fin
+		lea 	rbx, [rbx + OFFSET_SIGUIENTE]
+		jmp 	ciclo
+		
+		
+	.fin
+		pop 	rbp
+		ret
+		
 
 	; void descifrarMensajeDiabolico( lista *l, char *archivo, void (*funcImpPbr)(char*,FILE* ) ); [45]
 	descifrarMensajeDiabolico:
