@@ -2,7 +2,6 @@ EXTERN 		malloc
 EXTERN 		free
 EXTERN 		printf
 EXTERN 		fprintf
-EXTERN 		palabraLongitud
 
 
 ; PALABRA
@@ -30,9 +29,9 @@ EXTERN 		palabraLongitud
 	extern insertarAtras
 
 ; /** DEFINES **/    >> SE RECOMIENDA COMPLETAR LOS DEFINES CON LOS VALORES CORRECTOS
-	%define NULL 		0
-	%define TRUE 		1
-	%define FALSE 		0
+	%define NULL 			0
+	%define TRUE 			1
+	%define FALSE 			0
 
 	%define LISTA_SIZE 	    	 8
 	%define OFFSET_PRIMERO 		 0
@@ -41,7 +40,7 @@ EXTERN 		palabraLongitud
 	%define OFFSET_SIGUIENTE   	 0
 	%define OFFSET_PALABRA 		 8
 
-	%define OFFSET_CHAR			1
+	%define OFFSET_CHAR		1
 
 
 section .rodata
@@ -50,7 +49,6 @@ section .rodata
 section .data
 
 	string: 	db "%s", 10, 0
-
 
 section .text
 
@@ -133,19 +131,18 @@ section .text
 		; COMPLETAR AQUI EL CODIGO
 
 		push 	rbp
-
 		mov 	rbp, rsp
-
 		push 	rbx
 		sub 	rsp, 8
 
-
+		xor 	rcx, rcx
 		mov 	r8, rdi
 		mov 	rdi, rsi
 		mov 	rsi, string
-		mov 	rbx, r8
+		mov 	rdx, r8
 
-		call fprintf
+		xor 	rax, rax
+		call 	fprintf
 
 		add 	rsp, 8
 		pop 	rbx
@@ -161,36 +158,46 @@ section .text
 
 		push 	rbp
 		mov 	rbp, rsp
-		push 	r8
-		push 	rcx
+		push 	r14
+
+		push 	r12
+		push 	r13
+		sub 	rsp, 8
 
 		xor 	r12, r12
+		xor 	r13, r13
+		xor 	r14, r14
 
 		mov 	r12, rdi
 
 		call 	palabraLongitud
 
-		mov 	r15b, byte [rax]				;Guardo la longitud en r15b(No se modifica)
-;		mov 	cl, r15b							
+		mov 	r15b, al						;Guardo la longitud en r15b(No se modifica)	
+		xor 	rdi, rdi
+		inc 	rax
+		mov 	dil, al					
 
 		call 	malloc
+		xor 	rcx, rcx
 
 		mov 	cl, r15b						;Guardo la longitud en cl(para el loop)
-		mov 	r8, rax							;Preservo el puntero que voy a devolver
+		inc 	cl								;Incremento en 1 para q copie el "0"	
+		mov 	r14, rax						;Preservo el puntero que voy a devolver
 
-	.ciclo
 
+	.ciclo:
 		mov 	r13b, [r12]						;Guardo la letra
-		mov 	[r8], r13b						;Copio la letra a destino
-		inc 	r8								;Incremento ambos punteros
+		mov 	[r14], r13b						;Copio la letra a destino
+		inc 	r14								;Incremento ambos punteros
 		inc 	r12
-;		inc 	r14b
-;		lea 	r12, [r12 + OFFSET_CHAR]
-		loop
+		loop 	.ciclo
 
 
-		pop 	rcx
-		pop 	r8
+		add 	rsp, 8
+		pop 	r13
+		pop 	r12
+
+		pop 	r14
 		pop 	rbp
 		ret
 
@@ -208,15 +215,19 @@ section .text
 
 		push 	rbp
 		mov 	rbp, rsp
+		push 	r12
+		sub 	rsp, 8
 
 		mov 	r12, rdi
 		mov 	rdi, NODO_SIZE
 
 		call 	malloc
 
-		mov 	[rax + OFFSET_SIGUIENTE], NULL
+		mov 	qword [rax + OFFSET_SIGUIENTE], NULL
 		mov 	[rax + OFFSET_PALABRA], r12
 
+		add 	rsp, 8
+		pop 	r12
 		pop 	rbp
 		ret
 
@@ -230,7 +241,7 @@ section .text
 
 		call 	free
 
-		pop rbp
+		pop 	rbp
 		ret
 
 
@@ -244,7 +255,7 @@ section .text
 		mov 	rdi, LISTA_SIZE
 		call 	malloc
 
-		mov 	[rax + OFFSET_PRIMERO], NULL
+		mov 	qword [rax + OFFSET_PRIMERO], NULL
 
 		pop 	rbp
 		ret
@@ -253,6 +264,7 @@ section .text
 	; void oracionBorrar( lista *l ); [20]
 	oracionBorrar:
 		; COMPLETAR AQUI EL CODIGO
+
 		;Chequear tamaño de registros y si se preservan
 
 		push 	rbp
@@ -261,35 +273,32 @@ section .text
 		push 	r10
 
 		mov 	r12, rdi			;Guarda el puntero a l
-		cmp 	[r12 + OFFSET_PRIMERO], NULL
-		je 		
-		mov 	r13, [r12, OFFSET_PRIMERO]
+		cmp 	qword [r12 + OFFSET_PRIMERO], NULL
+		je 		.fin	
+		mov 	r13, [r12 + OFFSET_PRIMERO]
 
-	.ciclo
+	.ciclo:
 
-		cmp 	[r13 + OFFSET_SIGUIENTE], NULL
-		je 		fin2 	
-		mov 	r14, r13
+		cmp 	qword [r13 + OFFSET_SIGUIENTE], NULL
+		je 		.fin2 	
+		mov 	r14, r13				;podria ser mov rdi, r13
 		mov 	[r13 + OFFSET_SIGUIENTE], r13
-		mov 	rdi, r14
+		mov 	rdi, r14				;no seria necesario
 		call 	nodoBorrar
 		jmp 	.ciclo
 
-	.fin2 
-		mod 	rdi, r13
+	.fin2: 
+		mov 	rdi, r13
 		call 	nodoBorrar
 
-	.fin	
+	.fin:	
 		mov 	rdi, r10
 		call 	free
 
 		pop 	r10
 		pop 	r11
-		pop 	rbp
+		pop 	rbp	
 		ret
-
-
-
 
 	; void oracionImprimir( lista *l, char *archivo, void (*funcImprimirPalabra)(char*,FILE*) ); [35]
 	oracionImprimir:
@@ -302,14 +311,124 @@ section .text
 	; float longitudMedia( lista *l ); [30]
 	longitudMedia:
 		; COMPLETAR AQUI EL CODIGO
+		push 	rbp
+		mov 	rbp, rsp
+		push 	rbx
+		sub 	rsp, 8
+		
+		mov 	rdi, rbx
+		
+		xor 	r12, r12	;en r12 vamos a guardar la longitudMedia, tengo q ver q el call no la cambie
+		;xor 	xmm0, xmm0
+		;xor 	xmm1, xmm1
+		;xor 	xmm2, xmm2
+		
+		cmp 	qword [rbx + OFFSET_PRIMERO], NULL
+		je		.fin
+		
+		lea 	rbx, [rbx + OFFSET_PRIMERO]
+
+	.ciclo:
+		inc 	r12				;Contador de cantidad de palabras
+		mov 	rdi, [rbx + OFFSET_PALABRA]
+		call 	palabraLongitud
+		
+		cvtsi2ss xmm1, rax
+		;add 	xmm0, xmm1
+		
+		cmp 	qword [rbx + OFFSET_SIGUIENTE], NULL
+		je		.fin
+		
+		lea 	rbx, [rbx + OFFSET_SIGUIENTE]
+		jmp 	.ciclo
+		
+	.fin:	
+		cvtsi2ss xmm2, r12
+		divpd 	xmm0, xmm2
+		add 	rsp, 8
+		pop 	rbx
+		pop 	rbp
+		ret
 
 	; void insertarOrdenado( lista *l, char *palabra, bool (*funcCompararPalabra)(char*,char*) ); [35]
 	insertarOrdenado:
 		; COMPLETAR AQUI EL CODIGO
+		
+;		push 	rbp
+;		mov 	rbp, rsp
+		
+;		cmp 	qword [rdi + OFFSET_PRIMERO], NULL
+;		je		.insertarNull
+;		lea 	rbx, [rdi + OFFSET_PRIMERO]
+		
+;	.ciclo:
+		;Uso la funcion para comparar
+		
+;		cmp 	rax, TRUE
+;		je 		.insertar
+		
+;		cmp		qword [rdi + OFFSET_SIGUIETE], NULL
+;		je 		.insertarNull
+;		lea 	rbx, [rbx + OFFSET_SIGUIENTE]		;itero la lista
+;		jmp 	.ciclo
+		
+		
+;	.insertar
+;		mov 	rdi, rsi		;deberia ir arriba de todo o chequear siguiente = null ?
+;		call 	nodoCrear		;deberia ir arriba de todo o chequear sig = null ?
+		
+;	.insertarNULL
 
+;		cmp		qword [rbx + OFFSET_SIGUINTE], NULL ; fijarme si el siguiente del que inserto es NULL
+;		je 		.fin1
+;		mov 	r12, [rbx + OFFSET_SIGUIENTE]
+;		mov 	[rax + OFFSET_SIGUIENTE], r12
+;		jmp 	fin2
+		
+;	.fin1
+;		mov 	qword [rax + OFFSET_SIGUIENTE], NULL
+		
+;	.fin2
+;		mov 	[rbx + OFFSET_SIGUIENTE], rax
+		
+;		pop		rbp
+		ret
+	
+	
 	; void filtrarAltaLista( lista *l, bool (*funcCompararPalabra)(char*,char*), char *palabraCmp ); [35]
 	filtrarPalabra:
 		; COMPLETAR AQUI EL CODIGO
+		
+		push 	rbp
+		mov 	rbp, rsp
+		
+		cmp 	qword [rdi + OFFSET_PRIMERO], NULL
+		je		.fin
+		lea 	rbx, [rdi + OFFSET_PRIMERO]
+		
+	.ciclo:
+		
+		;Uso la funcion para comparar
+		
+		cmp 	rax, TRUE		;Si da True tengo q eliminar
+		jne 	.iterar
+	.eliminar:
+		
+		
+		call 	nodoBorrar		;primero chequear si era null y guardar siguiente.
+		
+		
+	.iterar:
+		cmp 	qword [rbx + OFFSET_SIGUIENTE], NULL
+		jmp		.fin
+		lea 	rbx, [rbx + OFFSET_SIGUIENTE]
+		jmp 	.ciclo
+		
+		
+	.fin:
+		pop 	rbp
+		ret
+		
 
 	; void descifrarMensajeDiabolico( lista *l, char *archivo, void (*funcImpPbr)(char*,FILE* ) ); [45]
 	descifrarMensajeDiabolico:
