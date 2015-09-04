@@ -42,5 +42,17 @@ int main (void){
 	nodoBorrar( miNodo );	
 	printf( "Palabra del Nodo: %s\n", miNodo->palabra );
 
+
+//	lista *miLista = oracionCrear();
+//	oracionImprimir( miLista, "salida.txt", palabraImprimir );
+//	oracionBorrar( miLista );
+
+
+	lista *miLista = oracionCrear();
+	insertarAtras( miLista, palabraCopiar( "palabra1" ) );
+	printf( "LongMedia = %2.5f\n", longitudMedia( miLista ) );
+
+
+
 	return 0;
 }

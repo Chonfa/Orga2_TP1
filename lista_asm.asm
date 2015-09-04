@@ -2,7 +2,7 @@ EXTERN 		malloc
 EXTERN 		free
 EXTERN 		printf
 EXTERN 		fprintf
-
+EXTERN 		fopen
 
 ; PALABRA
 	global palabraLongitud
@@ -48,7 +48,9 @@ section .rodata
 
 section .data
 
-	string: 	db "%s", 10, 0
+	string: 		db "%s", 10, 0
+	stringVacia: 	db "<oracionVacia>", 10, 0
+	stringNull:		db "<sinMensajeDiabolico>", 10, 0 
 
 section .text
 
@@ -202,10 +204,6 @@ section .text
 		ret
 
 
-
-
-
-
 ;/** FUNCIONES DE LISTA Y NODO **/
 ;-----------------------------------------------------------
 
@@ -239,6 +237,14 @@ section .text
 		push 	rbp
 		mov 	rbp, rsp
 
+
+		mov 	rcx, rdi
+
+		mov 	rdi, [rdi + OFFSET_PALABRA]
+		call 	free
+
+		mov 	rdi, rcx
+
 		call 	free
 
 		pop 	rbp
@@ -270,7 +276,10 @@ section .text
 		push 	rbp
 		mov 	rbp, rsp
 		push 	r11
-		push 	r10
+		push 	r12
+		push 	r13
+		push 	r14
+		sub 	rsp, 8
 
 		mov 	r12, rdi			;Guarda el puntero a l
 		cmp 	qword [r12 + OFFSET_PRIMERO], NULL
@@ -292,16 +301,43 @@ section .text
 		call 	nodoBorrar
 
 	.fin:	
-		mov 	rdi, r10
+		mov 	rdi, r12
 		call 	free
 
-		pop 	r10
+		add 	rsp, 8
+		pop 	r14
+		pop 	r13
+		pop 	r12
 		pop 	r11
 		pop 	rbp	
 		ret
 
 	; void oracionImprimir( lista *l, char *archivo, void (*funcImprimirPalabra)(char*,FILE*) ); [35]
 	oracionImprimir:
+
+		push 	rbp
+		mov 	rbp, rsp
+
+		call 	fopen
+
+		cmp 	qword [rdi + OFFSET_PRIMERO], NULL
+		je		.fin
+
+		
+
+
+
+
+		.fin:
+
+
+
+		ret
+
+
+
+
+
 		; COMPLETAR AQUI EL CODIGO
 
 
@@ -316,25 +352,22 @@ section .text
 		push 	rbx
 		sub 	rsp, 8
 		
-		mov 	rdi, rbx
+		mov 	rbx, rdi
 		
-		xor 	r12, r12	;en r12 vamos a guardar la longitudMedia, tengo q ver q el call no la cambie
-		;xor 	xmm0, xmm0
-		;xor 	xmm1, xmm1
-		;xor 	xmm2, xmm2
+		xor 	r12, r12
+		xor 	r13, r13		;en r12 vamos a guardar la longitudMedia, tengo q ver q el call no la cambie
 		
 		cmp 	qword [rbx + OFFSET_PRIMERO], NULL
-		je		.fin
+		je		.fin			;Chequear que devuelva 0 si no hay nada
 		
 		lea 	rbx, [rbx + OFFSET_PRIMERO]
 
 	.ciclo:
-		inc 	r12				;Contador de cantidad de palabras
+		inc 	r13				;Contador de cantidad de palabras
 		mov 	rdi, [rbx + OFFSET_PALABRA]
 		call 	palabraLongitud
 		
-		cvtsi2ss xmm1, rax
-		;add 	xmm0, xmm1
+		add 	r12, rax
 		
 		cmp 	qword [rbx + OFFSET_SIGUIENTE], NULL
 		je		.fin
@@ -343,8 +376,14 @@ section .text
 		jmp 	.ciclo
 		
 	.fin:	
-		cvtsi2ss xmm2, r12
-		divpd 	xmm0, xmm2
+
+
+		cvtsi2ss xmm0, r12
+		cvtsi2ss xmm1, r13
+		divps 	xmm0, xmm1
+
+		pop 	r13
+		pop 	r12
 		add 	rsp, 8
 		pop 	rbx
 		pop 	rbp
@@ -354,44 +393,43 @@ section .text
 	insertarOrdenado:
 		; COMPLETAR AQUI EL CODIGO
 		
-;		push 	rbp
-;		mov 	rbp, rsp
+		push 	rbp
+		mov 	rbp, rsp
 		
-;		cmp 	qword [rdi + OFFSET_PRIMERO], NULL
-;		je		.insertarNull
-;		lea 	rbx, [rdi + OFFSET_PRIMERO]
+		cmp 	qword [rdi + OFFSET_PRIMERO], NULL
+		je		.insertarNULL
+		mov 	rbx, [rdi + OFFSET_PRIMERO]
 		
-;	.ciclo:
+	.ciclo:
 		;Uso la funcion para comparar
 		
-;		cmp 	rax, TRUE
-;		je 		.insertar
+		cmp 	rax, TRUE
+		je 		.insertar
 		
-;		cmp		qword [rdi + OFFSET_SIGUIETE], NULL
-;		je 		.insertarNull
-;		lea 	rbx, [rbx + OFFSET_SIGUIENTE]		;itero la lista
-;		jmp 	.ciclo
+		cmp		qword [rdi + OFFSET_SIGUIENTE], NULL
+		je 		.insertarNULL
+		lea 	rbx, [rbx + OFFSET_SIGUIENTE]		;itero la lista
+		jmp 	.ciclo
 		
 		
-;	.insertar
-;		mov 	rdi, rsi		;deberia ir arriba de todo o chequear siguiente = null ?
-;		call 	nodoCrear		;deberia ir arriba de todo o chequear sig = null ?
+	.insertar:
+		mov 	rdi, rsi		;deberia ir arriba de todo o chequear siguiente = null ?
+		call 	nodoCrear		;deberia ir arriba de todo o chequear sig = null ?
 		
-;	.insertarNULL
-
-;		cmp		qword [rbx + OFFSET_SIGUINTE], NULL ; fijarme si el siguiente del que inserto es NULL
-;		je 		.fin1
-;		mov 	r12, [rbx + OFFSET_SIGUIENTE]
-;		mov 	[rax + OFFSET_SIGUIENTE], r12
-;		jmp 	fin2
+	.insertarNULL:
+		cmp		qword [rbx + OFFSET_SIGUIENTE], NULL ; fijarme si el siguiente del que inserto es NULL
+		je 		.fin1
+		mov 	r12, [rbx + OFFSET_SIGUIENTE]
+		mov 	[rax + OFFSET_SIGUIENTE], r12
+		jmp 	.fin2
 		
-;	.fin1
-;		mov 	qword [rax + OFFSET_SIGUIENTE], NULL
+	.fin1:
+		mov 	qword [rax + OFFSET_SIGUIENTE], NULL
 		
-;	.fin2
-;		mov 	[rbx + OFFSET_SIGUIENTE], rax
+	.fin2:
+		mov 	[rbx + OFFSET_SIGUIENTE], rax
 		
-;		pop		rbp
+		pop		rbp
 		ret
 	
 	
@@ -432,4 +470,51 @@ section .text
 
 	; void descifrarMensajeDiabolico( lista *l, char *archivo, void (*funcImpPbr)(char*,FILE* ) ); [45]
 	descifrarMensajeDiabolico:
+
+		push 	rbp
+		mov 	rbp, rsp
+		xor 	r12, r12
+
+		mov 	rdi, rsi
+		call 	fopen
+		mov 	r15, rax
+
+
+		cmp 	qword [rdi + OFFSET_PRIMERO], NULL
+		je		.mensajeNULL
+
+		mov 	r8, [rdi + OFFSET_PRIMERO]			
+
+
+
+	.guardado:
+
+		mov 	r8, [r8 + OFFSET_PALABRA]
+		push 	r8
+		inc 	r12
+		cmp 	qword [r8 + OFFSET_SIGUIENTE], NULL
+		jne		.guardado
+
+	.imprimir:
+
+
+		mov 	rsi, rdx
+		pop 	rdi
+		mov 	rsi, r15
+		call 	palabraImprimir
+		dec 	r12
+		jne 	.imprimir
+		jmp 	.fin
+
+	.mensajeNULL:
+
+								;pongo el mensajeNULL y lo imprimo
+
+
+	.fin:
+
+
+		pop 	rbp
+		ret
+
 		; COMPLETAR AQUI EL CODIGO
