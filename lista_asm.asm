@@ -3,6 +3,7 @@ EXTERN 		free
 EXTERN 		printf
 EXTERN 		fprintf
 EXTERN 		fopen
+EXTERN 		fclose
 
 ; PALABRA
 	global palabraLongitud
@@ -63,7 +64,7 @@ section .text
 
 		push	rbp
 		mov		rbp, rsp
-		xor 	al, al			 ;al parte baja rax
+		xor 	rax, rax			 ;al parte baja rax
 		mov 	r14b, byte [rdi] ;byte me dice el tamaño de lo que leo 
 		cmp 	r14b, NULL		 ;dil parte rdi
 		je 		.fin
@@ -238,12 +239,12 @@ section .text
 		mov 	rbp, rsp
 
 
-		mov 	rcx, rdi
+		mov 	rbx, rdi
 
 		mov 	rdi, [rdi + OFFSET_PALABRA]
 		call 	free
 
-		mov 	rdi, rcx
+		mov 	rdi, rbx
 
 		call 	free
 
@@ -317,20 +318,57 @@ section .text
 
 		push 	rbp
 		mov 	rbp, rsp
+		push 	rbx
+		push 	r12
+		push 	r13
+		push 	r14
+
+		mov 	r12, rdi
+		mov 	r13, rsi
+		mov 	r14, rdx
+
+		mov 	rdi, r13
 
 		call 	fopen
+		mov 	rbx, rax
 
-		cmp 	qword [rdi + OFFSET_PRIMERO], NULL
-		je		.fin
+		cmp 	qword [r12 + OFFSET_PRIMERO], NULL
+		je		.finNULL
 
-		
+		mov 	r12, [r12 + OFFSET_PRIMERO]
+
+	.ciclo:
+
+		mov 	rdi, [r12 + OFFSET_PALABRA]
+		mov 	rsi, rbx
+
+		call 	palabraImprimir
+
+		cmp 	qword [r12 + OFFSET_SIGUIENTE], NULL
+		je 		.fin
+		mov 	r12, [r12 + OFFSET_SIGUIENTE]
+		jne 	.ciclo
+
+	
+
+	.finNULL:
+
+		mov 	rdi, rbx
+		mov 	rsi, string
+		mov 	rdx, stringVacia
+
+		call 	printf
 
 
+	.fin:
+		mov 	rdi, rbx
+		call 	fclose
 
-
-		.fin:
-
-
+		pop 	r14
+		pop 	r13
+		pop 	r12
+		pop 	rbx
+		pop 	rbp 
 
 		ret
 
@@ -351,16 +389,17 @@ section .text
 		mov 	rbp, rsp
 		push 	rbx
 		sub 	rsp, 8
-		
+		push 	r12
+		push 	r13
+
 		mov 	rbx, rdi
-		
 		xor 	r12, r12
 		xor 	r13, r13		;en r12 vamos a guardar la longitudMedia, tengo q ver q el call no la cambie
 		
 		cmp 	qword [rbx + OFFSET_PRIMERO], NULL
 		je		.fin			;Chequear que devuelva 0 si no hay nada
 		
-		lea 	rbx, [rbx + OFFSET_PRIMERO]
+		mov 	rbx, [rbx + OFFSET_PRIMERO]
 
 	.ciclo:
 		inc 	r13				;Contador de cantidad de palabras
@@ -372,7 +411,7 @@ section .text
 		cmp 	qword [rbx + OFFSET_SIGUIENTE], NULL
 		je		.fin
 		
-		lea 	rbx, [rbx + OFFSET_SIGUIENTE]
+		mov 	rbx, [rbx + OFFSET_SIGUIENTE]
 		jmp 	.ciclo
 		
 	.fin:	
@@ -439,31 +478,47 @@ section .text
 		
 		push 	rbp
 		mov 	rbp, rsp
-		
+		push 	r12
+		push 	r13
+		push 	rbx
+		sub 	rsp, 8
+
+
 		cmp 	qword [rdi + OFFSET_PRIMERO], NULL
-		je		.fin
-		lea 	rbx, [rdi + OFFSET_PRIMERO]
+		je		.finNULL
+		mov 	r13, rdx		
+		mov 	rbx, rsi
+		mov 	r12, [rdi + OFFSET_PRIMERO]
+
 		
 	.ciclo:
 		
-		;Uso la funcion para comparar
-		
+		mov 	rsi, r13
+		mov 	rdi, [r12 + OFFSET_PALABRA]
+		call 	rbx
 		cmp 	rax, TRUE		;Si da True tengo q eliminar
 		jne 	.iterar
+
 	.eliminar:
 		
-		
+
+		mov 	rdi, r12		;REHACER ??? 
 		call 	nodoBorrar		;primero chequear si era null y guardar siguiente.
 		
 		
 	.iterar:
-		cmp 	qword [rbx + OFFSET_SIGUIENTE], NULL
-		jmp		.fin
-		lea 	rbx, [rbx + OFFSET_SIGUIENTE]
+		cmp 	qword [r12 + OFFSET_SIGUIENTE], NULL
+		je		.fin
+		mov 	r12, [r12 + OFFSET_SIGUIENTE]
 		jmp 	.ciclo
 		
 		
 	.fin:
+
+		add 	rsp, 8
+		pop 	rbx
+		pop 	r13
+		pop 	r12
 		pop 	rbp
 		ret
 		
@@ -503,18 +558,21 @@ section .text
 		mov 	rsi, r15
 		call 	palabraImprimir
 		dec 	r12
+		cmp 	r12, 0
 		jne 	.imprimir
 		jmp 	.fin
 
 	.mensajeNULL:
 
 								;pongo el mensajeNULL y lo imprimo
+		mov 	rdi, 
+		mov 	rsi, string
+		mov 	rdx, stringNull
 
+		call 	printf
 
 	.fin:
 
 
 		pop 	rbp
 		ret
-
-		; COMPLETAR AQUI EL CODIGO
