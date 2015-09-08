@@ -52,6 +52,7 @@ section .data
 	string: 		db "%s", 10, 0
 	stringVacia: 	db "<oracionVacia>", 10, 0
 	stringNull:		db "<sinMensajeDiabolico>", 10, 0 
+	app:			db "a", 0 
 
 section .text
 
@@ -245,7 +246,6 @@ section .text
 		call 	free
 
 		mov 	rdi, rbx
-
 		call 	free
 
 		pop 	rbp
@@ -289,10 +289,10 @@ section .text
 
 	.ciclo:
 
-		cmp 	qword [r13 + OFFSET_SIGUIENTE], NULL
+		cmp 	qword [r13 + OFFSET_SIGUIENTE], NULL		;lo puedo mover abajo y me ahorro 1 llamado
 		je 		.fin2 	
 		mov 	r14, r13				;podria ser mov rdi, r13
-		mov 	[r13 + OFFSET_SIGUIENTE], r13
+		mov 	r13, [r13 + OFFSET_SIGUIENTE]
 		mov 	rdi, r14				;no seria necesario
 		call 	nodoBorrar
 		jmp 	.ciclo
@@ -328,7 +328,7 @@ section .text
 		mov 	r14, rdx
 
 		mov 	rdi, r13
-
+		mov 	rsi, app
 		call 	fopen
 		mov 	rbx, rax
 
@@ -428,100 +428,155 @@ section .text
 		pop 	rbp
 		ret
 
+
 	; void insertarOrdenado( lista *l, char *palabra, bool (*funcCompararPalabra)(char*,char*) ); [35]
 	insertarOrdenado:
 		; COMPLETAR AQUI EL CODIGO
-		
-		push 	rbp
-		mov 	rbp, rsp
-		
-		cmp 	qword [rdi + OFFSET_PRIMERO], NULL
-		je		.insertarNULL
-		mov 	rbx, [rdi + OFFSET_PRIMERO]
-		
-	.ciclo:
-		;Uso la funcion para comparar
-		
-		cmp 	rax, TRUE
-		je 		.insertar
-		
-		cmp		qword [rdi + OFFSET_SIGUIENTE], NULL
-		je 		.insertarNULL
-		lea 	rbx, [rbx + OFFSET_SIGUIENTE]		;itero la lista
-		jmp 	.ciclo
-		
-		
-	.insertar:
-		mov 	rdi, rsi		;deberia ir arriba de todo o chequear siguiente = null ?
-		call 	nodoCrear		;deberia ir arriba de todo o chequear sig = null ?
-		
-	.insertarNULL:
-		cmp		qword [rbx + OFFSET_SIGUIENTE], NULL ; fijarme si el siguiente del que inserto es NULL
-		je 		.fin1
-		mov 	r12, [rbx + OFFSET_SIGUIENTE]
-		mov 	[rax + OFFSET_SIGUIENTE], r12
-		jmp 	.fin2
-		
-	.fin1:
-		mov 	qword [rax + OFFSET_SIGUIENTE], NULL
-		
-	.fin2:
-		mov 	[rbx + OFFSET_SIGUIENTE], rax
-		
-		pop		rbp
-		ret
-	
-	
-	; void filtrarAltaLista( lista *l, bool (*funcCompararPalabra)(char*,char*), char *palabraCmp ); [35]
-	filtrarPalabra:
-		; COMPLETAR AQUI EL CODIGO
-		
+
+
 		push 	rbp
 		mov 	rbp, rsp
 		push 	r12
 		push 	r13
-		push 	rbx
-		sub 	rsp, 8
+		push 	r14
+		push 	r15
 
 
+		mov 	r12, rsi
 		cmp 	qword [rdi + OFFSET_PRIMERO], NULL
-		je		.finNULL
-		mov 	r13, rdx		
-		mov 	rbx, rsi
-		mov 	r12, [rdi + OFFSET_PRIMERO]
+		mov 	rbx, rdi
+		je		.insertarAtras
 
-		
+		mov 	r15, rdx
+	
+		mov 	r13, [rdi + OFFSET_PRIMERO]
+
+		;r13=ant
+		;r14=sig
+
+	.comparacionPrimero:
+
+		mov 	rdi, r13
+		mov 	rsi, r12
+		call 	r15
+		cmp 	rax, TRUE 
+
+
+
 	.ciclo:
+		cmp 	r13, NULL
+		je 		.insertar
 		
-		mov 	rsi, r13
-		mov 	rdi, [r12 + OFFSET_PALABRA]
-		call 	rbx
-		cmp 	rax, TRUE		;Si da True tengo q eliminar
-		jne 	.iterar
+		mov 	r14, [r13 + OFFSET_SIGUIENTE]
+		cmp 	r14, NULL
+		je 		.insertarAtras
 
-	.eliminar:
+		mov 	rdi, [r14 + OFFSET_PALABRA]
+		mov 	rsi, r12
+		call 	r15
 		
+		cmp 	rax, TRUE
+		je 		.insertar 
+		mov 	r13, [r13 + OFFSET_SIGUIENTE]
+		jmp 	.ciclo		
 
-		mov 	rdi, r12		;REHACER ??? 
-		call 	nodoBorrar		;primero chequear si era null y guardar siguiente.
-		
-		
-	.iterar:
-		cmp 	qword [r12 + OFFSET_SIGUIENTE], NULL
-		je		.fin
-		mov 	r12, [r12 + OFFSET_SIGUIENTE]
-		jmp 	.ciclo
-		
-		
+
+
+	.insertar:
+		mov 	rdi, r12
+		call 	nodoCrear
+		mov 	[rax + OFFSET_SIGUIENTE], r14
+		mov 	[r13 + OFFSET_SIGUIENTE], rax
+		jmp     .fin
+
+	.insertarAtras:
+		mov 	rdi, rbx
+		mov 	rsi, r12
+		call 	insertarAtras
+		jmp 	.fin
+
+	.insertarAdelante:
+		mov 	rdi, r12
+		call 	nodoCrear
+		mov 	r12, [rbx + OFFSET_PRIMERO]
+		mov 	[rax + OFFSET_SIGUIENTE], r12
+		mov 	[rbx + OFFSET_PRIMERO], rax
+
 	.fin:
-
-		add 	rsp, 8
-		pop 	rbx
+		pop 	r15	
+		pop 	r14
 		pop 	r13
 		pop 	r12
 		pop 	rbp
 		ret
-		
+
+
+
+	; void filtrarAltaLista( lista *l, bool (*funcCompararPalabra)(char*,char*), char *palabraCmp ); [35]
+	filtrarPalabra:
+		; COMPLETAR AQUI EL CODIGO
+
+		push 	rbp
+		mov 	rbp, rsp
+		push 	r12
+		push 	r13
+		push 	r14
+		push 	r15
+
+
+		mov 	r12, rdx
+		cmp 	qword [rdi + OFFSET_PRIMERO], NULL
+		je		.fin
+
+		mov 	r15, rsi
+		mov 	r13, rdi
+		mov 	r13, [r13 + OFFSET_PRIMERO]
+
+	.ciclo:
+		cmp 	r13, NULL
+		je 		.fin
+		mov 	rdi, [r13 + OFFSET_PALABRA]
+		mov 	rsi, r12
+		call 	r15
+		mov 	r14, r13
+		mov 	r13, [r13 + OFFSET_SIGUIENTE]
+		cmp 	rax, TRUE		
+		jne 	.ciclo
+
+		mov 	rdi, r14
+		call 	nodoBorrar
+		jmp 	.ciclo
+
+
+
+	.fin:
+
+		pop 	r15
+		pop 	r14
+		pop 	r13
+		pop 	r12
+		pop 	rbp
+		ret
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	; void descifrarMensajeDiabolico( lista *l, char *archivo, void (*funcImpPbr)(char*,FILE* ) ); [45]
 	descifrarMensajeDiabolico:
@@ -565,7 +620,7 @@ section .text
 	.mensajeNULL:
 
 								;pongo el mensajeNULL y lo imprimo
-		mov 	rdi, 
+	;	mov 	rdi, 
 		mov 	rsi, string
 		mov 	rdx, stringNull
 
