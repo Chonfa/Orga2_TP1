@@ -50,8 +50,8 @@ section .rodata
 section .data
 
 	string: 		db "%s", 10, 0
-	stringVacia: 	db "<oracionVacia>", 10, 0
-	stringNull:		db "<sinMensajeDiabolico>", 10, 0 
+	stringVacia: 	db "<oracionVacia>", 0
+	stringNull:		db "<sinMensajeDiabolico>", 0 
 	app:			db "a", 0 
 
 section .text
@@ -88,31 +88,24 @@ section .text
 
 		push 	rbp
 		mov 	rbp, rsp
+
 		xor 	al, al
+	
 	.ciclo:
 		mov 	r8b, byte [rdi]
 		mov 	r9b, byte [rsi]
-
 		cmp 	r8b, r9b
 		jl 		.finTrue 					;prim_letra(p1) < prim_letra(p2) ? then True
-
 		jne 	.finFalse					;prim_letra(p1) != prim_letra(p2) ? then False
-
 		cmp 	r9b, 0
 		je 		.finFalse					;prim_letra(p2) == 0 ? then False
-;		cmp 	r8b, 0						;prim_letra(p1) == 0 ? then True
-;		je 		.finTrue
-
 		lea 	rdi, [rdi + OFFSET_CHAR]
 		lea 	rsi, [rsi + OFFSET_CHAR]
-;		mov 	r14b, byte [rdi]
-;		mov 	r15b, byte [rsi]
-;		cmp 	r14b, r15b
-;		jl 		.fin
 		jmp 	.ciclo
 
 	.finTrue:
 		mov 	al, 1
+	
 	.finFalse:
 		pop 	rbp
 		ret
@@ -144,7 +137,6 @@ section .text
 		mov 	rdi, rsi
 		mov 	rsi, string
 		mov 	rdx, r8
-
 		xor 	rax, rax
 		call 	fprintf
 
@@ -163,7 +155,6 @@ section .text
 		push 	rbp
 		mov 	rbp, rsp
 		push 	r14
-
 		push 	r12
 		push 	r13
 		sub 	rsp, 8
@@ -171,23 +162,17 @@ section .text
 		xor 	r12, r12
 		xor 	r13, r13
 		xor 	r14, r14
-
 		mov 	r12, rdi
-
 		call 	palabraLongitud
-
 		mov 	r15b, al						;Guardo la longitud en r15b(No se modifica)	
 		xor 	rdi, rdi
 		inc 	rax
 		mov 	dil, al					
-
 		call 	malloc
 		xor 	rcx, rcx
-
 		mov 	cl, r15b						;Guardo la longitud en cl(para el loop)
 		inc 	cl								;Incremento en 1 para q copie el "0"	
 		mov 	r14, rax						;Preservo el puntero que voy a devolver
-
 
 	.ciclo:
 		mov 	r13b, [r12]						;Guardo la letra
@@ -196,11 +181,9 @@ section .text
 		inc 	r12
 		loop 	.ciclo
 
-
 		add 	rsp, 8
 		pop 	r13
 		pop 	r12
-
 		pop 	r14
 		pop 	rbp
 		ret
@@ -220,9 +203,7 @@ section .text
 
 		mov 	r12, rdi
 		mov 	rdi, NODO_SIZE
-
 		call 	malloc
-
 		mov 	qword [rax + OFFSET_SIGUIENTE], NULL
 		mov 	[rax + OFFSET_PALABRA], r12
 
@@ -239,15 +220,12 @@ section .text
 		push 	rbp
 		mov 	rbp, rsp
 
-
 		mov 	rbx, rdi
-
 		mov 	rdi, [rdi + OFFSET_PALABRA]
 		call 	free
-
 		mov 	rdi, rbx
 		call 	free
-
+		
 		pop 	rbp
 		ret
 
@@ -261,7 +239,6 @@ section .text
 
 		mov 	rdi, LISTA_SIZE
 		call 	malloc
-
 		mov 	qword [rax + OFFSET_PRIMERO], NULL
 
 		pop 	rbp
@@ -271,8 +248,6 @@ section .text
 	; void oracionBorrar( lista *l ); [20]
 	oracionBorrar:
 		; COMPLETAR AQUI EL CODIGO
-
-		;Chequear tamaño de registros y si se preservan
 
 		push 	rbp
 		mov 	rbp, rsp
@@ -334,31 +309,23 @@ section .text
 
 		cmp 	qword [r12 + OFFSET_PRIMERO], NULL
 		je		.finNULL
-
 		mov 	r12, [r12 + OFFSET_PRIMERO]
 
 	.ciclo:
 
 		mov 	rdi, [r12 + OFFSET_PALABRA]
 		mov 	rsi, rbx
-
-		call 	palabraImprimir
-
+		call 	r14
 		cmp 	qword [r12 + OFFSET_SIGUIENTE], NULL
 		je 		.fin
 		mov 	r12, [r12 + OFFSET_SIGUIENTE]
-		jne 	.ciclo
-
-	
+		jmp 	.ciclo
 
 	.finNULL:
 
-		mov 	rdi, rbx
-		mov 	rsi, string
-		mov 	rdx, stringVacia
-
-		call 	printf
-
+		mov 	rdi, stringVacia
+		mov 	rsi, rbx
+		call 	r14
 
 	.fin:
 		mov 	rdi, rbx
@@ -394,29 +361,23 @@ section .text
 
 		mov 	rbx, rdi
 		xor 	r12, r12
-		xor 	r13, r13		;en r12 vamos a guardar la longitudMedia, tengo q ver q el call no la cambie
-		
+		xor 	r13, r13
+		inc 	r13
 		cmp 	qword [rbx + OFFSET_PRIMERO], NULL
-		je		.fin			;Chequear que devuelva 0 si no hay nada
-		
+		je		.fin			;Chequear que devuelva 0 si no hay nada		
 		mov 	rbx, [rbx + OFFSET_PRIMERO]
 
 	.ciclo:
-		inc 	r13				;Contador de cantidad de palabras
 		mov 	rdi, [rbx + OFFSET_PALABRA]
 		call 	palabraLongitud
-		
 		add 	r12, rax
-		
 		cmp 	qword [rbx + OFFSET_SIGUIENTE], NULL
 		je		.fin
-		
+		inc 	r13				;Contador de cantidad de palabras
 		mov 	rbx, [rbx + OFFSET_SIGUIENTE]
 		jmp 	.ciclo
 		
 	.fin:	
-
-
 		cvtsi2ss xmm0, r12
 		cvtsi2ss xmm1, r13
 		divps 	xmm0, xmm1
@@ -433,7 +394,6 @@ section .text
 	insertarOrdenado:
 		; COMPLETAR AQUI EL CODIGO
 
-
 		push 	rbp
 		mov 	rbp, rsp
 		push 	r12
@@ -448,7 +408,6 @@ section .text
 		je		.insertarAtras
 
 		mov 	r15, rdx
-	
 		mov 	r13, [rdi + OFFSET_PRIMERO]
 
 		;r13=ant
@@ -460,8 +419,7 @@ section .text
 		mov 	rsi, r12
 		call 	r15
 		cmp 	rax, TRUE 
-
-
+		je 		.insertarAdelante
 
 	.ciclo:
 		cmp 	r13, NULL
@@ -523,31 +481,40 @@ section .text
 		push 	r14
 		push 	r15
 
-
 		mov 	r12, rdx
 		cmp 	qword [rdi + OFFSET_PRIMERO], NULL
 		je		.fin
 
 		mov 	r15, rsi
 		mov 	r13, rdi
-		mov 	r13, [r13 + OFFSET_PRIMERO]
+		mov 	r14, rdi
+
+		;r12 = *palabraCmp	
+		;r14 = anterior
+		;r13 = actual
 
 	.ciclo:
-		cmp 	r13, NULL
+		mov 	r14, r13
+
+		cmp 	qword [r13 + OFFSET_SIGUIENTE], NULL
 		je 		.fin
+
+		mov 	r13, [r13 + OFFSET_SIGUIENTE]
+
 		mov 	rdi, [r13 + OFFSET_PALABRA]
 		mov 	rsi, r12
+		;mov 	r14, r13
+;_		mov 	r13, [r13 + OFFSET_SIGUIENTE]
+		
 		call 	r15
-		mov 	r14, r13
-		mov 	r13, [r13 + OFFSET_SIGUIENTE]
 		cmp 	rax, TRUE		
-		jne 	.ciclo
+		je 	.ciclo
 
-		mov 	rdi, r14
+		mov 	r13, [r13 + OFFSET_SIGUIENTE]
+		mov 	rdi, [r14 + OFFSET_SIGUIENTE]
 		call 	nodoBorrar
+		mov 	[r14 + OFFSET_SIGUIENTE], r13
 		jmp 	.ciclo
-
-
 
 	.fin:
 
@@ -559,54 +526,41 @@ section .text
 		ret
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 	; void descifrarMensajeDiabolico( lista *l, char *archivo, void (*funcImpPbr)(char*,FILE* ) ); [45]
 	descifrarMensajeDiabolico:
 
 		push 	rbp
 		mov 	rbp, rsp
-		xor 	r12, r12
+		push 	r12
+		push 	r15
+		push 	r13
+		push 	r14
 
+		xor 	r12, r12
+		mov 	r13, rdi
+		mov 	r14, rdx	
 		mov 	rdi, rsi
+		mov 	rsi, app 		;ASDFKLAJSLDFK
 		call 	fopen
 		mov 	r15, rax
 
-
-		cmp 	qword [rdi + OFFSET_PRIMERO], NULL
+		cmp 	qword [r13 + OFFSET_PRIMERO], NULL
 		je		.mensajeNULL
 
-		mov 	r8, [rdi + OFFSET_PRIMERO]			
-
+		mov 	r8, [r13 + OFFSET_PRIMERO]			
 
 
 	.guardado:
 
-		mov 	r8, [r8 + OFFSET_PALABRA]
-		push 	r8
+		mov 	r9, [r8 + OFFSET_PALABRA]
+		push 	r9
 		inc 	r12
 		cmp 	qword [r8 + OFFSET_SIGUIENTE], NULL
-		jne		.guardado
+		je		.imprimir
+		mov 	r8, [r8 + OFFSET_SIGUIENTE]
+		jmp 	.guardado
 
 	.imprimir:
-
 
 		mov 	rsi, rdx
 		pop 	rdi
@@ -619,15 +573,17 @@ section .text
 
 	.mensajeNULL:
 
-								;pongo el mensajeNULL y lo imprimo
-	;	mov 	rdi, 
-		mov 	rsi, string
-		mov 	rdx, stringNull
-
-		call 	printf
+		mov 	rdi, stringNull
+		mov 	rsi, r15
+		call 	r14
 
 	.fin:
 
-
+		mov 	rdi, r15
+		call 	fclose
+		pop 	r14
+		pop 	r13
+		pop 	r15
+		pop 	r12	
 		pop 	rbp
 		ret
