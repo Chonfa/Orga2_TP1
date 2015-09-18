@@ -77,9 +77,11 @@ int main (void){
 */
 
 	lista *miLista = oracionCrear();
+	insertarOrdenado( miLista, palabraCopiar( "palabra3" ), palabraMenor );
+	insertarOrdenado( miLista, palabraCopiar( "palabra2" ), palabraMenor );
 	insertarOrdenado( miLista, palabraCopiar( "palabra1" ), palabraMenor );
-//	insertarOrdenado( miLista, palabraCopiar( "palabra2" ), palabraMenor );
-//	insertarOrdenado( miLista, palabraCopiar( "palabra3" ), palabraMenor );
+	insertarOrdenado( miLista, palabraCopiar( "palabra4" ), palabraMenor );
+	insertarOrdenado( miLista, palabraCopiar( "palabra5" ), palabraMenor );
 	oracionImprimir( miLista, "salida.txt", palabraImprimir );
 	filtrarPalabra( miLista, palabraMenor, "a" );
 	oracionImprimir( miLista, "salida.txt", palabraImprimir );

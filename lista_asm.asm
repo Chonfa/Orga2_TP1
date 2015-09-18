@@ -220,10 +220,10 @@ section .text
 		push 	rbp
 		mov 	rbp, rsp
 
-		mov 	rbx, rdi
+		mov 	r11, rdi
 		mov 	rdi, [rdi + OFFSET_PALABRA]
 		call 	free
-		mov 	rdi, rbx
+		mov 	rdi, r11
 		call 	free
 		
 		pop 	rbp
@@ -410,15 +410,18 @@ section .text
 		mov 	r15, rdx
 		mov 	r13, [rdi + OFFSET_PRIMERO]
 
+		;r15=funcComp;
+		;r12=palabra
+
 		;r13=ant
 		;r14=sig
 
 	.comparacionPrimero:
 
-		mov 	rdi, r13
+		mov 	rdi, [r13 + OFFSET_PALABRA]
 		mov 	rsi, r12
 		call 	r15
-		cmp 	rax, TRUE 
+		cmp 	al, FALSE 
 		je 		.insertarAdelante
 
 	.ciclo:
@@ -433,7 +436,7 @@ section .text
 		mov 	rsi, r12
 		call 	r15
 		
-		cmp 	rax, TRUE
+		cmp 	al, FALSE
 		je 		.insertar 
 		mov 	r13, [r13 + OFFSET_SIGUIENTE]
 		jmp 	.ciclo		
@@ -486,7 +489,7 @@ section .text
 		je		.fin
 
 		mov 	r15, rsi
-		mov 	r13, rdi
+		mov 	r13, [rdi + OFFSET_PRIMERO]
 		mov 	r14, rdi
 
 		;r12 = *palabraCmp	
@@ -504,16 +507,17 @@ section .text
 		mov 	rdi, [r13 + OFFSET_PALABRA]
 		mov 	rsi, r12
 		;mov 	r14, r13
-;_		mov 	r13, [r13 + OFFSET_SIGUIENTE]
+;		mov 	r13, [r13 + OFFSET_SIGUIENTE]
 		
 		call 	r15
 		cmp 	rax, TRUE		
 		je 	.ciclo
 
-		mov 	r13, [r13 + OFFSET_SIGUIENTE]
+
+		mov 	r11, [r13 + OFFSET_SIGUIENTE]
 		mov 	rdi, [r14 + OFFSET_SIGUIENTE]
+		mov 	[r14 + OFFSET_SIGUIENTE], r11
 		call 	nodoBorrar
-		mov 	[r14 + OFFSET_SIGUIENTE], r13
 		jmp 	.ciclo
 
 	.fin:
