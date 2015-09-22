@@ -490,7 +490,7 @@ section .text
 
 		mov 	r15, rsi
 		mov 	r13, [rdi + OFFSET_PRIMERO]
-		mov 	r14, rdi
+		;mov 	r14, rdi
 
 		;r12 = *palabraCmp	
 		;r14 = anterior

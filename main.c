@@ -82,9 +82,16 @@ int main (void){
 	insertarOrdenado( miLista, palabraCopiar( "palabra1" ), palabraMenor );
 	insertarOrdenado( miLista, palabraCopiar( "palabra4" ), palabraMenor );
 	insertarOrdenado( miLista, palabraCopiar( "palabra5" ), palabraMenor );
+	insertarOrdenado( miLista, palabraCopiar( "abel" ), palabraMenor );
+	insertarOrdenado( miLista, palabraCopiar( "pal" ), palabraMenor );
+	insertarOrdenado( miLista, palabraCopiar( "palindromo" ), palabraMenor );
+	insertarOrdenado( miLista, palabraCopiar( "zzzzzzzz" ), palabraMenor );
+	insertarOrdenado( miLista, palabraCopiar( "yyyyyyyy" ), palabraMenor );
+
 	oracionImprimir( miLista, "salida.txt", palabraImprimir );
-	filtrarPalabra( miLista, palabraMenor, "a" );
-	oracionImprimir( miLista, "salida.txt", palabraImprimir );
+
+	filtrarPalabra( miLista, palabraIgual, "palabra9" );
+
 
 /*
 	oracionImprimir( miLista, "salida.txt", palabraImprimir );
